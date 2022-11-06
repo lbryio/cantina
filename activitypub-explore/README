@@ -1,0 +1,7 @@
+A little utility to explore activitypub json.
+
+Start by going to:
+
+http://localhost:5000/?u=<activitypub-url> 
+
+And follow links from there.

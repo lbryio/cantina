@@ -56,4 +56,5 @@ const PathChannel = "/channel/"
 
 func main() {
 	http.HandleFunc(PathChannel, handleChannel)
+	http.ListenAndServe("localhost:8000", nil)
 }

@@ -11,7 +11,8 @@ type Channel vocab.Actor
 
 func ChannelFromClaim(claim sdk.Claim) Channel {
 	return Channel{
-		ID:   claim.PermanentURL,
-		Type: vocab.Person,
+		ID:   activitypub.IRI(claim.PermanentURL),
+		Type: vocab.PersonType,
+		Name: vocab.NaturalLanguageValues{{Ref: vocab.NilLangRef, Value: vocab.Content(claim.Name)}},
 	}
 }

@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+
+	"github.com/go-ap/jsonld"
 )
 
 // TODO - Does ActivityPub specify a specific error format?
@@ -77,7 +79,7 @@ func handleChannel(w http.ResponseWriter, req *http.Request) {
 		channel := objects.ChannelFromClaim(claim)
 
 		var response []byte
-		response, err = json.Marshal(channel)
+		response, err = jsonld.Marshal(channel)
 
 		if err != nil {
 			internalServiceErrorJson(w, err, "Error generating channel response")

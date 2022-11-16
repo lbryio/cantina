@@ -7,6 +7,7 @@ import (
 	"lbryio/cantina/sdk"
 	"log"
 	"net/http"
+	"regexp"
 	"strings"
 )
 
@@ -45,11 +46,48 @@ func internalServiceErrorJson(w http.ResponseWriter, serverErr error, errContext
 	return
 }
 
+var IsHex = regexp.MustCompile(`^[a-z0-9]+$`).MatchString
+
 func handleChannel(w http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodGet {
-		claim := sdk.GetClaim("aoeu")
-		channel = objects.channelFromClaim(claim)
+		segments := strings.Split(req.URL.Path, PathChannel)
+		if len(segments) != 2 || segments[0] != "" {
+			// Not sure exactly how this could happen but it violates expectations.
+			readableErrorJson(w, http.StatusNotFound, "")
+			return
+		}
+		if !IsHex(segments[1]) {
+			readableErrorJson(w, http.StatusNotFound, "Need hex claim ID")
+			return
+		}
+		claimID := sdk.ClaimId(segments[1])
+
+		claim, err := sdk.GetClaim(claimID)
+		if err != nil {
+			switch err.(type) {
+			case *sdk.ClaimNotFound:
+				// It's not the expected format
+				readableErrorJson(w, http.StatusNotFound, "Claim not found")
+				return
+			default:
+				internalServiceErrorJson(w, err, "Error getting claim")
+				return
+			}
+		}
+		channel := objects.ChannelFromClaim(claim)
+
+		var response []byte
+		response, err = json.Marshal(channel)
+
+		if err != nil {
+			internalServiceErrorJson(w, err, "Error generating channel response")
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintf(w, string(response))
 	}
+
 }
 
 const PathChannel = "/channel/"

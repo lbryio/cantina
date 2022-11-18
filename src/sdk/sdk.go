@@ -14,20 +14,23 @@ import (
 
 const SDK_URL = "http://localhost:5279"
 
+const NOT_FOUND = "NOT_FOUND"
+
 type ClaimId string
 type ClaimName string
 
 type Claim struct {
 	ClaimId      ClaimId   `json:"claim_id"`
-	PermanentURL string    `json:"permanent_url"`
 	Name         ClaimName `json:"name"`
+	PermanentURL string    `json:"permanent_url"`
+
+	Error interface{} `json:"error"`
 }
 
 type ClaimResponse struct {
-	Result struct {
-		Items []Claim `json:"items"`
-		// TODO? Blocked map[string]interface{} `json:"blocked"`
-	} `json:"result"`
+	// TODO? Blocked map[string]interface{} `json:"blocked"`
+
+	Result map[string]Claim `json:"result"`
 }
 
 type ClaimNotFound struct {
@@ -38,10 +41,12 @@ func (ce *ClaimNotFound) Error() string {
 }
 
 func GetClaim(claimId ClaimId) (claim Claim, err error) {
+	url := "lbry://channel#" + string(claimId)
+
 	reqBodyStr, _ := json.Marshal(map[string]interface{}{
-		"method": "claim_search",
-		"params": map[string]string{
-			"claim_id": string(claimId),
+		"method": "resolve",
+		"params": map[string]([]string){
+			"urls": []string{url},
 		},
 	})
 
@@ -59,12 +64,27 @@ func GetClaim(claimId ClaimId) (claim Claim, err error) {
 		return
 	}
 
-	if len(respBody.Result.Items) == 0 {
-		err = &ClaimNotFound{}
-	} else if len(respBody.Result.Items) > 1 {
-		err = fmt.Errorf("Multiple found for some reason. Skipping.")
+	claim, ok := respBody.Result[url]
+
+	if ok {
+		switch claim.Error.(type) {
+		case map[string]interface{}:
+			claimErr := claim.Error.(map[string]interface{})
+			if name, _ := claimErr["name"].(string); name == NOT_FOUND {
+				err = &ClaimNotFound{}
+				claim = Claim{}
+			} else {
+				err = fmt.Errorf("Unknown SDK response error")
+				claim = Claim{}
+			}
+		case nil:
+		default:
+			// Some other error format, which does exist
+			err = fmt.Errorf("Unknown SDK response error")
+			claim = Claim{}
+		}
 	} else {
-		claim = respBody.Result.Items[0]
+		err = fmt.Errorf("Unknown SDK response error")
 	}
 
 	return

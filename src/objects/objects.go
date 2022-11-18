@@ -13,6 +13,8 @@ func ChannelFromClaim(claim sdk.Claim) Channel {
 	return Channel{
 		ID:   activitypub.IRI(claim.PermanentURL),
 		Type: vocab.PersonType,
-		Name: vocab.NaturalLanguageValues{{Ref: vocab.NilLangRef, Value: vocab.Content(claim.Name)}},
+		Name: vocab.NaturalLanguageValues{{Ref: vocab.NilLangRef, Value: vocab.Content(claim.Value.Title)}},
+
+		PreferredUsername: vocab.NaturalLanguageValues{{Ref: vocab.NilLangRef, Value: vocab.Content(claim.Name[1:])}},
 	}
 }

@@ -23,6 +23,9 @@ type Claim struct {
 	ClaimId      ClaimId   `json:"claim_id"`
 	Name         ClaimName `json:"name"`
 	PermanentURL string    `json:"permanent_url"`
+	Value        struct {
+		Title string `json:"title"`
+	} `json:"value"`
 
 	Error interface{} `json:"error"`
 }
@@ -85,6 +88,11 @@ func GetClaim(claimId ClaimId) (claim Claim, err error) {
 		}
 	} else {
 		err = fmt.Errorf("Unknown SDK response error")
+	}
+
+	if err == nil && claim.Name[0] != '@' {
+		// TODO - different error, probably not a 500
+		err = fmt.Errorf("Invalid claim")
 	}
 
 	return

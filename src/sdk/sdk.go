@@ -23,9 +23,13 @@ type Claim struct {
 	ClaimId      ClaimId   `json:"claim_id"`
 	Name         ClaimName `json:"name"`
 	PermanentURL string    `json:"permanent_url"`
+	Timestamp    int64     `json:"timestamp"`
 	Value        struct {
 		Title string `json:"title"`
 	} `json:"value"`
+	Meta struct {
+		CreationTimestamp int64 `json:"creation_timestamp"`
+	} `json:"meta"`
 
 	Error interface{} `json:"error"`
 }

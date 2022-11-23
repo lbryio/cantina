@@ -79,7 +79,11 @@ func handleChannel(w http.ResponseWriter, req *http.Request) {
 		channel := objects.ChannelFromClaim(claim)
 
 		var response []byte
-		response, err = jsonld.Marshal(channel)
+		response, err = jsonld.WithContext(
+			jsonld.IRI("https://www.w3.org/ns/activitystreams"),
+			jsonld.IRI("https://w3id.org/security/v1"), // TODO - this likely needs to be updated
+			jsonld.IRI("https://lbry.tech/activitystreams-extensions/v1#"),
+		).Marshal(channel)
 
 		if err != nil {
 			internalServiceErrorJson(w, err, "Error generating channel response")
